@@ -4,7 +4,8 @@
 
 # IntelliJ project files
 .idea
-build
+build/*
+!build/libs/
 .gradle
 *.iml
 out
