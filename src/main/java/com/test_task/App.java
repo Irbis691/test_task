@@ -21,39 +21,38 @@ public class App {
 
 	public static void main(String[] args) {
 		String originFilePath = args[0];
-//		String originFilePath = "C:\\Users\\Pazynych\\Downloads\\startbootstrap-sb-admin-2-examples\\sample-0-origin.html";
 		String diffCaseFilePath = args[1];
-//		String diffCaseFilePath = "C:\\Users\\Pazynych\\Downloads\\startbootstrap-sb-admin-2-examples\\sample-1-evil-gemini.html";
 
 		File originFile = new File(originFilePath);
 		File diffCaseFile = new File(diffCaseFilePath);
 
-		Optional<Element> buttonOptOrigin = findElementById(originFile, TARGET_ELEMENT_ID);
-		String buttonText = buttonOptOrigin.map(b -> b.childNode(0).attributes().asList().get(0).getValue()).get();
+		Optional<Element> buttonOrigin = findElementById(originFile, TARGET_ELEMENT_ID);
+		String buttonText = buttonOrigin.map(b -> b.childNode(0).attributes().asList().get(0).getValue()).get();
 		Map<String, String> buttonAttr = new HashMap<>();
-		buttonOptOrigin.ifPresent(element -> element.attributes().asList()
+		buttonOrigin.ifPresent(element -> element.attributes().asList()
 				.forEach(attr -> buttonAttr.put(attr.getKey(), attr.getValue())));
 
-		StringBuilder cssQuery0 = new StringBuilder("a[class*=\"" + buttonAttr.get("class") + "\"]");
-//		StringBuilder cssQuery1 = new StringBuilder("a[title*=\"" + buttonAttr.get("title") + "\"]");
-		Optional<Elements> optElementsWithCorrectClass = findElementsByQuery(diffCaseFile, cssQuery0.toString());
-		List<Element> elementsWithCorrectClass = optElementsWithCorrectClass.map(ArrayList::new).orElse(null);
-
-		List<Element> collect = elementsWithCorrectClass.stream()
-				.filter(element -> element.childNode(0).attributes().asList().get(0).getValue().equals(buttonText))
-				.collect(Collectors.toList());
-		Element element = collect.get(0);
-
-		System.out.println(buildPathToDiffCaseElement(element).substring(2));
+		StringBuilder cssQuery = new StringBuilder("a[class*=\"" + buttonAttr.get("class") + "\"]");
+		Optional<Elements> optElements = findElementsByQuery(diffCaseFile, cssQuery.toString());
+		if (optElements.isPresent()) {
+			Elements elements = optElements.get();
+			if (elements.size() > 1) {
+				cssQuery.insert(cssQuery.length(), "[title*=\"" + buttonAttr.get("title") + "\"]");
+				optElements = findElementsByQuery(diffCaseFile, cssQuery.toString());
+				optElements.ifPresent(value -> System.out.println(buildPathToDiffCaseElement(value.get(0))));
+			} else {
+				System.out.println(buildPathToDiffCaseElement(elements.get(0)));
+			}
+		}
 	}
 
-	private static StringBuilder buildPathToDiffCaseElement(Element element) {
+	private static String buildPathToDiffCaseElement(Element element) {
 		StringBuilder res = new StringBuilder();
-		while(element.parent() != null) {
+		while (element.parent() != null) {
 			res.insert(0, " > " + element.tag());
 			element = element.parent();
 		}
-		return res;
+		return res.substring(3);
 	}
 
 	private static Optional<Element> findElementById(File htmlFile, String targetElementId) {
