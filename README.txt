@@ -1,0 +1,1 @@
+Current implementation just search by class attribute and then finds element with correct text.
